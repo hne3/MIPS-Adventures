@@ -24,12 +24,14 @@ li $v0, 9
 syscall # Allocates appropriate amount of heap space to store array.
 
 move $t1, $v0 # Stores address of start of array in t1
+move $t5, $v0 # Copies array into t5 for use later.
 
 la $a0, getList
 li $v0, 4
 syscall # Asks for elements in array.
 
-addi $t2, $zero, 1 # Initializes counter for ArrayLoop in t2
+addi $t2, $zero, 0 # Initializes counter for ArrayLoop in t2
+subi $t0, $t0, 1 # So that we can index at zero.
 
 ArrayLoop:
 li $v0, 5
@@ -59,6 +61,9 @@ la $a0, getSearchInput # Asks user for value to search for.
 li $v0, 4
 syscall
 
+li $v0, 5
+syscall # Reads an integer from console.
+
 add $t4, $v0, $zero # Stores search value in t4.
 
 BinarySearch:
@@ -74,17 +79,34 @@ addi $t9, $zero, 2 # t9 = 2
 div $t8, $t8, $t9 # t8 = t8 / 2
 # mid is now stored in t8
 
-# if t4 equal to t1[mid], return mid:
+# if t4 equal to t5[mid], return mid:
+# sll $t8, $t8, 2
+add $t5, $t5, $t8 # t5 = t5[mid]
+lw $s0, ($t5)
+beq $t4, $s0, Return
 
-# else:
+
 
 Else:
 
-# if t1[mid] > t4
-# BinarySearch(t1, t4, t6, mid - 1)
+# if t5[mid] > t4
+bgt $t5, $t4, GreaterThan
+blt $t5, $t4, LessThan
 
 # if t1[mid] < t4
 # BinarySearch(t1, t4, mid + 1, t7)
+
+GreaterThan: # Sets up for if t5 > t4
+# BinarySearch(t1, t4, t6, mid - 1)
+addi $t8, $t8, -1 # Decrements t8 by 1
+move $t7, $t8 # Substitutes t7 with t8
+j BinarySearch # Loops back to BinarySearch
+
+LessThan: # Sets up for if t5 < t4
+# BinarySearch(t1, t4, mid + 2, t7)
+addi $t8, $t8, 1 # Increments t8 by 1
+move $t6, $t8 # Substitutes t6 with t8
+j BinarySearch # Loops back to BinarySearch
 
 NoMatch:
 
@@ -92,5 +114,6 @@ la $a0, noMatch # Tells user that there is no match.
 li $v0, 4
 syscall
 
+# else:
 Return:
 # return mid
